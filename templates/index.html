@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantCare AI | Plant Disease Detection</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <script>
+        try {
+            const savedTheme = localStorage.getItem("plantcare-theme");
+            if (savedTheme) document.documentElement.dataset.theme = savedTheme;
+        } catch (e) {}
+    </script>
+</head>
+<body>
+<div class="app">
+
+    <!-- Left Sidebar -->
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-icon">🌿</div>
+            <div>
+                <div class="brand-name">PlantCare AI</div>
+                <span class="brand-caption">Intelligent crop health</span>
+            </div>
+        </div>
+
+        
+        <button type="button" class="new-chat" id="newChat">
+            <span>＋</span> New analysis
+        </button>
+
+        <div class="side-label">Prediction History</div>
+        
+        <div class="history-list" id="historyList">
+            {% if history %}
+                {% for item in history %}
+                    <div class="history-item" title="{{ item.prediction }} ({{ item.confidence }})">
+                        <span>🌱 {{ item.prediction }}</span>
+                        <small>{{ item.confidence }}</small>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="history-placeholder">
+                    No predictions yet. Upload an image to start!
+                </div>
+            {% endif %}
+        </div>
+
+        <button type="button" class="theme-button" id="themeToggle">
+            <span id="themeIcon">🌙</span>
+            <span id="themeLabel">Switch to dark mode</span>
+        </button>
+
+        <!-- Authenticated User Profile Block -->
+        <div class="user-profile-badge">
+            <div class="user-avatar">{{ user_name[0] | upper }}</div>
+            <div class="user-info">
+                <span class="user-name-label">{{ user_name }}</span>
+                <span class="user-email-label">{{ user_email }}</span>
+            </div>
+            <a href="{{ url_for('logout') }}" class="signout-link" title="Sign Out">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i>
+            </a>
+        </div>
+
+        <div class="side-footer">
+            <div class="footer-note">PlantCare AI · MongoDB Atlas Connected</div>
+        </div>
+    </aside>
+
+    <!-- Main Workspace -->
+    <main class="main">
+        <header class="topbar">
+            <button type="button" class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">☰</button>
+            <div class="mobile-brand">🌿 PlantCare AI</div>
+            <div class="topbar-title">Plant Disease Detection</div>
+            <div class="status"><span class="status-dot"></span>Image Analysis</div>
+        </header>
+
+        <div class="workspace">
+            <section class="welcome">
+                <div class="welcome-icon">🌱</div>
+                <h1>Grow healthier plants<br>with <span>AI assistance.</span></h1>
+                <p>Upload a clear photo of an affected plant leaf to identify leaf disease patterns.</p>
+            </section>
+
+            <!-- Upload Area -->
+            <section class="upload-card">
+                <div class="section-heading">
+                    <span class="icon">📷</span>
+                    <div>
+                        <h2>Analyze a plant image</h2>
+                        <p>Upload a JPG, PNG, or WEBP leaf photo.</p>
+                    </div>
+                </div>
+
+                <form id="predictionForm" method="POST" enctype="multipart/form-data">
+                    <label class="drop-zone" id="dropZone" for="image" tabindex="0">
+                        <input class="file-input" id="image" type="file" name="image" accept="image/*" required>
+                        <div class="upload-icon">+</div>
+                        <strong>Drop your plant image here</strong>
+                        <p>or <span class="browse">browse files</span></p>
+                    </label>
+
+                    <div class="preview-wrap" id="previewWrap">
+                        <img class="preview" id="previewImage" alt="Preview">
+                        <div class="file-details">
+                            <div class="file-name" id="fileName"></div>
+                            <div class="file-hint">Ready for inference</div>
+                        </div>
+                        <button type="button" class="remove-file" id="removeFile">✕</button>
+                    </div>
+
+                    <button type="submit" class="predict-button" id="predictButton">
+                        ✦ Analyze plant image <span>→</span>
+                    </button>
+                </form>
+            </section>
+
+            <!-- Predictions / Results Area -->
+            <section class="conversation" id="conversation">
+                <div class="conversation-heading">Analysis Result</div>
+
+                {% if uploaded_image %}
+    <div class="message">
+        <div class="avatar">👤</div>
+        <div class="message-content">
+            <div class="message-name">Your submission</div>
+            <img src="{{ uploaded_image }}" alt="Submitted leaf" class="result-img">
+        </div>
+    </div>
+{% endif %}
+                
+
+                {% if prediction %}
+                    <div class="message">
+                        <div class="avatar">🌿</div>
+                        <div class="message-content">
+                            <div class="message-name">PlantCare AI</div>
+                            <div class="result-box">
+                                <div class="result-label">Predicted Condition</div>
+                                <div class="result-value">{{ prediction }}</div>
+                                {% if confidence %}
+                                    <div class="confidence">Confidence Score: <strong>{{ confidence }}</strong></div>
+                                {% endif %}
+                            </div>
+                            <div class="disclaimer">
+                                Recommendation: Confirm severe symptoms with local agronomists before treatment.
+                            </div>
+                        </div>
+                    </div>
+                {% elif error %}
+                    <div class="message">
+                        <div class="avatar">⚠️</div>
+                        <div class="message-content">
+                            <div class="error-box">{{ error }}</div>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="empty-state">
+                        <span class="empty-icon">💬</span>
+                        Your analysis results and model diagnosis will appear here.
+                    </div>
+                {% endif %}
+            </section>
+        </div>
+
+        <footer class="footer">
+            PlantCare AI © 2026 · Created by Karthik J
+        </footer>
+    </main>
+</div>
+
+<script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
